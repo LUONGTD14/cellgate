@@ -1,0 +1,10 @@
+<resources>
+    <!-- Base application theme. -->
+    <style name="Base.Theme.Cellgate" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Tắt chế độ fullscreen -->
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+    </style>
+
+    <style name="Theme.Cellgate" parent="Base.Theme.Cellgate" />
+</resources>
