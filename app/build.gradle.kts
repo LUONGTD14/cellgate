@@ -4,9 +4,7 @@ plugins {
 
 android {
     namespace = "com.ltd14.cellgate"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.ltd14.cellgate"
@@ -15,12 +13,17 @@ android {
         versionCode = 1
         versionName = "1.0.070626" // 1.0.070626 bug increase date, feature increase code
 
-        setProperty(
-            "archivesBaseName",
-            "cellgate_${versionName}"
-        )
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    applicationVariants.all {
+        outputs.all {
+
+            val versionName = android.defaultConfig.versionName ?: "unknown"
+
+            (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
+                "cellgat_${versionName}.apk"
+        }
     }
 
     buildTypes {
