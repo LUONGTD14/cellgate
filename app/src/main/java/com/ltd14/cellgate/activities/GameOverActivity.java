@@ -2,7 +2,7 @@ package com.ltd14.cellgate.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.ltd14.cellgate.R;
@@ -17,8 +17,8 @@ public class GameOverActivity extends AppCompatActivity {
 
     TextView tvScore = findViewById(R.id.tvScore);
     TextView tvBest = findViewById(R.id.tvBest);
-    Button btnRetry = findViewById(R.id.btnRetry);
-    Button btnHome = findViewById(R.id.btnHome);
+    ImageButton btnRetry = findViewById(R.id.btnRetry);
+    ImageButton btnHome = findViewById(R.id.btnHome);
 
     int score = getIntent().getIntExtra("score", 0);
     tvScore.setText("Score : " + score);

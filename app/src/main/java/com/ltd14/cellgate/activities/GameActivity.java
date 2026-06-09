@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import androidx.appcompat.app.AppCompatActivity;
@@ -31,8 +30,8 @@ public class GameActivity extends AppCompatActivity {
 
     pauseMenu = findViewById(R.id.pauseMenu);
     btnPause = findViewById(R.id.btnPause);
-    Button btnResume = findViewById(R.id.btnResume);
-    Button btnHome = findViewById(R.id.btnHome);
+    ImageButton btnResume = findViewById(R.id.btnResume);
+    ImageButton btnHome = findViewById(R.id.btnHome);
 
     btnPause.setOnClickListener(v -> pauseGame());
     btnResume.setOnClickListener(v -> resumeGame());
@@ -63,11 +62,9 @@ public class GameActivity extends AppCompatActivity {
   @Override
   protected void onPause() {
     super.onPause();
-    // Khi nhấn Home hoặc Power, Activity sẽ vào onPause
-    // Ta tự động kích hoạt trạng thái Pause của Game
     pauseGame();
     if (gameView != null) {
-      gameView.pause(); // Dừng thread game
+      gameView.pause();
     }
   }
 
@@ -75,7 +72,7 @@ public class GameActivity extends AppCompatActivity {
   protected void onResume() {
     super.onResume();
     if (gameView != null) {
-      gameView.resume(); // Khởi động lại thread game
+      gameView.resume();
     }
   }
 

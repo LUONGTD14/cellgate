@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#121A38"
     android:fitsSystemWindows="true"
     android:gravity="center"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="24dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:letterSpacing="0.1"
+        android:shadowColor="#8000E5FF"
+        android:shadowDx="0"
+        android:shadowDy="0"
+        android:shadowRadius="15"
         android:text="CELL GATE"
-        android:textColor="#FFFFFF"
-        android:textSize="36sp"
+        android:textColor="@color/game_primary"
+        android:textSize="48sp"
         android:textStyle="bold" />
 
     <TextView
@@ -20,14 +27,19 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
-        android:textColor="#FFFFFF"
+        android:alpha="0.8"
+        android:textColor="@android:color/white"
         android:textSize="20sp" />
 
-    <Button
+    <ImageButton
         android:id="@+id/btnPlay"
-        android:layout_width="220dp"
-        android:layout_height="56dp"
-        android:layout_marginTop="40dp"
-        android:text="PLAY" />
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="64dp"
+        android:background="@drawable/bg_circle_button"
+        android:padding="20dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_play"
+        app:tint="@android:color/white" />
 
 </LinearLayout>
