@@ -9,6 +9,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -170,18 +171,35 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
   }
 
   private void drawGame() {
-    Canvas canvas = getHolder().lockCanvas();
-    if (canvas == null) return;
+    SurfaceHolder holder = getHolder();
+    Canvas canvas = null;
     try {
-      synchronized (getHolder()) {
-        backgroundRenderer.draw(canvas, getWidth(), getHeight());
-        particleSystem.draw(canvas, particlePaint);
-        drawWalls(canvas);
-        drawPlane(canvas);
-        hudRenderer.draw(canvas, scoreManager.getScore());
+      // Use hardware acceleration for API 26+
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        canvas = holder.lockHardwareCanvas();
+      } else {
+        canvas = holder.lockCanvas();
       }
+
+      if (canvas != null) {
+        synchronized (holder) {
+          backgroundRenderer.draw(canvas, getWidth(), getHeight());
+          particleSystem.draw(canvas, particlePaint);
+          drawWalls(canvas);
+          drawPlane(canvas);
+          hudRenderer.draw(canvas, scoreManager.getScore());
+        }
+      }
+    } catch (Exception e) {
+      Log.e(TAG, "Drawing error in drawGame", e);
     } finally {
-      getHolder().unlockCanvasAndPost(canvas);
+      if (canvas != null) {
+        try {
+          holder.unlockCanvasAndPost(canvas);
+        } catch (Exception e) {
+          Log.e(TAG, "Error unlocking canvas", e);
+        }
+      }
     }
   }
 
