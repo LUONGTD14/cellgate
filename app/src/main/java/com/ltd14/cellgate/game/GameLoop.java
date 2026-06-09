@@ -2,10 +2,12 @@ package com.ltd14.cellgate.game;
 
 import static com.ltd14.cellgate.util.Constants.FPS;
 
-public class GameLoop extends Thread {
+import android.util.Log;
 
+public class GameLoop extends Thread {
+  private static final String TAG = "GameLoop";
   private final Runnable updateRunnable;
-  private boolean running;
+  private volatile boolean running;
 
   public GameLoop(Runnable updateRunnable) {
     this.updateRunnable = updateRunnable;
@@ -13,17 +15,23 @@ public class GameLoop extends Thread {
 
   @Override
   public void run() {
-    long frameTime = 1000 / FPS;
+    long targetTime = 1_000_000_000 / FPS; // nanoseconds
     while (running) {
-      long start = System.currentTimeMillis();
-      updateRunnable.run();
+      long startTime = System.nanoTime();
 
-      long elapsed = System.currentTimeMillis() - start;
-      long sleep = frameTime - elapsed;
-      if (sleep > 0) {
+      try {
+        updateRunnable.run();
+      } catch (Exception e) {
+        Log.e(TAG, "Error in game loop", e);
+      }
+
+      long timeTaken = System.nanoTime() - startTime;
+      long sleepTime = (targetTime - timeTaken) / 1_000_000; // convert to milliseconds
+
+      if (sleepTime > 0) {
         try {
-          Thread.sleep(sleep);
-        } catch (Exception ignored) {
+          Thread.sleep(sleepTime);
+        } catch (InterruptedException ignored) {
         }
       }
     }
@@ -31,7 +39,9 @@ public class GameLoop extends Thread {
 
   public void startLoop() {
     running = true;
-    start();
+    if (!isAlive()) {
+      start();
+    }
   }
 
   public void stopLoop() {

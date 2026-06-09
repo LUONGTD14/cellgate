@@ -11,6 +11,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -32,9 +33,11 @@ import com.ltd14.cellgate.util.PreferenceUtil;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
+  private static final String TAG = "GameView";
   private final Context context;
   private final float scrollSpeed = 4f;
   private final Handler mainHandler = new Handler(Looper.getMainLooper());
+  private final RectF collisionTmpRect = new RectF();
   private GameLoop gameLoop;
   private Plane plane;
   private MapData mapData;
@@ -111,13 +114,22 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
       try {
         gameLoop.join();
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        Log.e(TAG, "Error joining game loop", e);
       }
       gameLoop = null;
     }
   }
 
   public void resume() {
+    if (gameLoop == null && getHolder().getSurface().isValid()) {
+      gameLoop =
+          new GameLoop(
+              () -> {
+                update();
+                drawGame();
+              });
+      gameLoop.startLoop();
+    }
   }
 
   private void update() {
@@ -139,11 +151,18 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
   }
 
   private boolean checkCollision() {
+    if (plane == null || mapData == null) return false;
     RectF planeRect = plane.getBounds();
     for (Wall wall : mapData.getWalls()) {
-      RectF r = new RectF(wall.getRect());
-      r.offset(0, scrollY);
-      if (RectF.intersects(planeRect, r)) {
+      collisionTmpRect.set(wall.getRect());
+      collisionTmpRect.offset(0, scrollY);
+
+      // Culling optimization: skip collision if wall is outside screen vertically
+      if (collisionTmpRect.bottom < 0 || collisionTmpRect.top > getHeight()) {
+        continue;
+      }
+
+      if (RectF.intersects(planeRect, collisionTmpRect)) {
         return true;
       }
     }
@@ -170,7 +189,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     canvas.save();
     canvas.translate(0, scrollY);
     for (Wall wall : mapData.getWalls()) {
-      canvas.drawRoundRect(wall.getRect(), 12, 12, wallPaint);
+      RectF r = wall.getRect();
+      // Optimization: don't draw walls that are off-screen
+      if (r.top + scrollY > getHeight() || r.bottom + scrollY < 0) {
+        continue;
+      }
+      canvas.drawRoundRect(r, 12, 12, wallPaint);
     }
     canvas.restore();
   }
@@ -211,7 +235,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     if (score > best) {
       PreferenceUtil.saveBestScore(context, score);
     }
-    
+
     mainHandler.postDelayed(
         () -> {
           Intent intent = new Intent(context, GameOverActivity.class);
@@ -233,22 +257,22 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
       case MotionEvent.ACTION_MOVE:
         plane.setTargetX(event.getX());
         break;
+      case MotionEvent.ACTION_UP:
+        performClick();
+        break;
     }
     return true;
   }
 
   @Override
+  public boolean performClick() {
+    return super.performClick();
+  }
+
+  @Override
   public void surfaceCreated(@NonNull SurfaceHolder holder) {
     initializeGame();
-    if (gameLoop == null) {
-      gameLoop =
-          new GameLoop(
-              () -> {
-                update();
-                drawGame();
-              });
-      gameLoop.startLoop();
-    }
+    resume();
   }
 
   @Override
@@ -265,6 +289,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     mainHandler.removeCallbacksAndMessages(null);
     if (soundManager != null) {
       soundManager.release();
+    }
+  }
+
+  @Override
+  protected void onAttachedToWindow() {
+    super.onAttachedToWindow();
+    if (soundManager == null) {
+      soundManager = new SoundManager(context);
     }
   }
 }
