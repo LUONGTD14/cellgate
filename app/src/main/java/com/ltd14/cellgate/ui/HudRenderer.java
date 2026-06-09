@@ -9,10 +9,10 @@ public class HudRenderer {
 
   private final Paint labelPaint = new Paint();
   private final Paint scorePaint = new Paint();
+  private final String label = "Score : ";
   private int lastScore = -1;
   private String scoreText = "0";
   private float labelWidth = -1f;
-  private final String label = "Score : ";
 
   public HudRenderer() {
     labelPaint.setColor(Color.WHITE);
@@ -35,7 +35,7 @@ public class HudRenderer {
       scoreText = String.valueOf(score);
     }
     
-    float x = 40;
+    float x = 46;
     float y = 160;
 
     canvas.drawText(label, x, y, labelPaint);

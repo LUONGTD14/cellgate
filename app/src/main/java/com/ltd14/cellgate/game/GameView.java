@@ -93,6 +93,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     }
   }
 
+  public void setGameState(GameState state) {
+    this.state = state;
+  }
+
+  public GameState getGameState() {
+    return state;
+  }
+
   private void initializeGame() {
     if (initialized) return;
     initialized = true;
@@ -269,7 +277,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
   @Override
   public boolean onTouchEvent(MotionEvent event) {
-    if (plane == null) return true;
+    if (plane == null || state == GameState.PAUSED) return true;
     switch (event.getAction()) {
       case MotionEvent.ACTION_DOWN:
       case MotionEvent.ACTION_MOVE:
