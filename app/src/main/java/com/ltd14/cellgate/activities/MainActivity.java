@@ -40,6 +40,6 @@ public class MainActivity extends AppCompatActivity {
 
   private void refreshBestScore() {
     int best = PreferenceUtil.getBestScore(this);
-    tvBest.setText("Best Score : " + best);
+    tvBest.setText(getString(R.string.best_score_format, best));
   }
 }

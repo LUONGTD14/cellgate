@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">Cell Gate</string>
+    <string name="score_format">Score : %1$d</string>
+    <string name="best_format">Best : %1$d</string>
+    <string name="best_score_format">Best Score : %1$d</string>
+    <string name="game_over">GAME OVER</string>
+    <string name="title_cell_gate">CELL GATE</string>
+    <string name="paused">PAUSED</string>
+    <string name="score_label">Score : </string>
 </resources>

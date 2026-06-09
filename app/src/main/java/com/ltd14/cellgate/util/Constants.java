@@ -26,6 +26,7 @@ public final class Constants {
 
   public static final String PREF_NAME = "sky_escape_pref";
   public static final String BEST_SCORE = "best_score";
+  public static final String EXTRA_SCORE = "extra_score";
 
   private Constants() {}
 }

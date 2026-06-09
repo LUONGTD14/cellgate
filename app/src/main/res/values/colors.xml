@@ -4,7 +4,7 @@
     <color name="white">#FFFFFFFF</color>
 
     <!-- Game Theme Colors -->
-    <color name="game_primary">#16ACC5</color>
+    <color name="game_primary">#3F51B5</color>
     <color name="game_primary_dark">#048699</color>
     <color name="game_accent">#FF4081</color>
     <color name="game_overlay">#BB0B1026</color>

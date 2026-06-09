@@ -68,7 +68,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     scoreManager = new ScoreManager();
     mapGenerator = new MapGenerator();
     backgroundRenderer = new BackgroundRenderer();
-    hudRenderer = new HudRenderer();
+    hudRenderer = new HudRenderer(context);
     soundManager = new SoundManager(context);
 
     wallPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -265,7 +265,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     mainHandler.postDelayed(
         () -> {
           Intent intent = new Intent(context, GameOverActivity.class);
-          intent.putExtra("score", score);
+          intent.putExtra(Constants.EXTRA_SCORE, score);
           intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
           context.startActivity(intent);
           if (context instanceof GameActivity) {

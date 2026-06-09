@@ -6,6 +6,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.ltd14.cellgate.R;
+import com.ltd14.cellgate.util.Constants;
 import com.ltd14.cellgate.util.PreferenceUtil;
 
 public class GameOverActivity extends AppCompatActivity {
@@ -20,9 +21,9 @@ public class GameOverActivity extends AppCompatActivity {
     ImageButton btnRetry = findViewById(R.id.btnRetry);
     ImageButton btnHome = findViewById(R.id.btnHome);
 
-    int score = getIntent().getIntExtra("score", 0);
-    tvScore.setText("Score : " + score);
-    tvBest.setText("Best : " + PreferenceUtil.getBestScore(this));
+    int score = getIntent().getIntExtra(Constants.EXTRA_SCORE, 0);
+    tvScore.setText(getString(R.string.score_format, score));
+    tvBest.setText(getString(R.string.best_format, PreferenceUtil.getBestScore(this)));
 
     btnRetry.setOnClickListener(
         v -> {
