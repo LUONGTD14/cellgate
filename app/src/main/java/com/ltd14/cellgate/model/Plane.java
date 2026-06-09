@@ -5,12 +5,12 @@ import android.graphics.RectF;
 public class Plane {
   private final float width;
   private final float height;
-  private float x;
+  private final RectF bounds = new RectF();
+  private volatile float x;
   private float y;
-  private float targetX;
+  private volatile float targetX;
   private float angle;
   private int lane;
-  private final RectF bounds = new RectF();
 
   public Plane(float x, float y, float width, float height) {
     this.x = x;
@@ -31,7 +31,9 @@ public class Plane {
   }
 
   private void updateBounds() {
-    bounds.set(x - width / 2f, y - height / 2f, x + width / 2f, y + height / 2f);
+    float hitWidth = width * 0.9f;
+    float hitHeight = height * 0.9f;
+    bounds.set(x - hitWidth / 2f, y - hitHeight / 2f, x + hitWidth / 2f, y + hitHeight / 2f);
   }
 
   public RectF getBounds() {
