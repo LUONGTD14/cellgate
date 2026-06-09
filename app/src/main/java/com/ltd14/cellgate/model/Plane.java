@@ -1,5 +1,7 @@
 package com.ltd14.cellgate.model;
 
+import static com.ltd14.cellgate.util.Constants.HITBOX_RATIO;
+
 import android.graphics.RectF;
 
 public class Plane {
@@ -31,8 +33,8 @@ public class Plane {
   }
 
   private void updateBounds() {
-    float hitWidth = width * 0.9f;
-    float hitHeight = height * 0.9f;
+    float hitWidth = width * HITBOX_RATIO;
+    float hitHeight = height * HITBOX_RATIO;
     bounds.set(x - hitWidth / 2f, y - hitHeight / 2f, x + hitWidth / 2f, y + hitHeight / 2f);
   }
 

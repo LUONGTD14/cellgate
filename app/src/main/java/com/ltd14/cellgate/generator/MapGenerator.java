@@ -1,17 +1,22 @@
 package com.ltd14.cellgate.generator;
 
+import static com.ltd14.cellgate.util.Constants.BASE_BRIDGE_COUNT;
 import static com.ltd14.cellgate.util.Constants.COLS;
+import static com.ltd14.cellgate.util.Constants.DIFFICULTY_INCREMENT;
+import static com.ltd14.cellgate.util.Constants.MAX_CONSECUTIVE_EMPTY;
 import static com.ltd14.cellgate.util.Constants.MAX_ROWS;
 import static com.ltd14.cellgate.util.Constants.MAX_WALL_OF_GATE_RATIO;
 import static com.ltd14.cellgate.util.Constants.MAX_WALL_RATIO;
+import static com.ltd14.cellgate.util.Constants.MIN_KEEP_RATIO;
 import static com.ltd14.cellgate.util.Constants.ROWS_FOR_CELLH;
+import static com.ltd14.cellgate.util.Constants.SCORE_PER_BRIDGE;
 import static com.ltd14.cellgate.util.Constants.WALL_HEIGHT_RATIO;
 import static com.ltd14.cellgate.util.Constants.WALL_WIDTH_RATIO;
 
 import com.ltd14.cellgate.model.MapData;
 import com.ltd14.cellgate.model.Wall;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class MapGenerator {
@@ -19,11 +24,13 @@ public class MapGenerator {
   private static final int GATE_COUNT = GATE_COLS.length;
   private static final int[] OPEN_BOTTOM_OPTIONS = {7, 10, 11, 15, 19};
   private final Random random = new Random();
+  private final boolean[][] wallGrid = new boolean[MAX_ROWS][COLS];
+  private final int[] gateOpenCount = new int[COLS];
+  private final List<Wall> wallPool = new ArrayList<>();
 
   public MapData generate(int width, int height, int score) {
     MapData map = new MapData();
 
-    int rows = MAX_ROWS;
     float cellW = width / (float) COLS;
     float cellH = height / (float) ROWS_FOR_CELLH;
     float wallWidth = cellW * WALL_WIDTH_RATIO;
@@ -31,62 +38,63 @@ public class MapGenerator {
     float marginX = (cellW - wallWidth) / 2f;
     float marginY = (cellH - wallHeight) / 2f;
 
-    float mapHeight = rows * cellH; // 21 * (height/19) > height
+    float mapHeight = MAX_ROWS * cellH;
 
-    boolean[][] wall = new boolean[rows][COLS];
-    for (int r = 0; r < rows; r++) {
+    // Reset grid
+    for (int r = 0; r < MAX_ROWS; r++) {
       for (int c = 0; c < COLS; c++) {
-        wall[r][c] = true;
+        wallGrid[r][c] = true;
       }
     }
 
     int winnerIndex = random.nextInt(GATE_COUNT);
     int winnerCol = GATE_COLS[winnerIndex];
 
-    Map<Integer, Integer> openBottomCount = new HashMap<>();
     for (int gateCol : GATE_COLS) {
       if (gateCol == winnerCol) {
-        openBottomCount.put(gateCol, rows);
+        gateOpenCount[gateCol] = MAX_ROWS;
       } else {
         int open = OPEN_BOTTOM_OPTIONS[random.nextInt(OPEN_BOTTOM_OPTIONS.length)];
-        if (open > rows) open = rows;
-        openBottomCount.put(gateCol, open);
+        gateOpenCount[gateCol] = Math.min(open, MAX_ROWS);
       }
     }
 
     for (int gateCol : GATE_COLS) {
-      int openCount = openBottomCount.get(gateCol);
-      int startRow = rows - openCount;
-      for (int r = startRow; r < rows; r++) {
-        wall[r][gateCol] = false;
+      int openCount = gateOpenCount[gateCol];
+      int startRow = MAX_ROWS - openCount;
+      for (int r = startRow; r < MAX_ROWS; r++) {
+        wallGrid[r][gateCol] = false;
       }
     }
 
-    int bridgeCount = 3 + score / 5;
+    int bridgeCount = BASE_BRIDGE_COUNT + score / SCORE_PER_BRIDGE;
     if (bridgeCount > 10) bridgeCount = 10;
+
     for (int b = 0; b < bridgeCount; b++) {
       int idx1 = random.nextInt(GATE_COUNT);
       int idx2 = random.nextInt(GATE_COUNT);
       while (idx2 == idx1) idx2 = random.nextInt(GATE_COUNT);
+
       int col1 = GATE_COLS[idx1];
       int col2 = GATE_COLS[idx2];
       int startCol = Math.min(col1, col2);
       int endCol = Math.max(col1, col2);
-      int row = random.nextInt(rows);
+      int row = random.nextInt(MAX_ROWS);
       for (int c = startCol; c <= endCol; c++) {
-        wall[row][c] = false;
+        wallGrid[row][c] = false;
       }
     }
 
-    float baseRatio = 0.4f + score * 0.01f;
+    float baseRatio = MIN_KEEP_RATIO + score * DIFFICULTY_INCREMENT;
     if (baseRatio > MAX_WALL_OF_GATE_RATIO) baseRatio = MAX_WALL_OF_GATE_RATIO;
+
     for (int c = 0; c < COLS; c++) {
       if (c % 2 == 0) {
-        float maxRatio = (c == 0 || c == 10) ? MAX_WALL_OF_GATE_RATIO : MAX_WALL_RATIO;
+        float maxRatio = (c == 0 || c == COLS - 1) ? MAX_WALL_OF_GATE_RATIO : MAX_WALL_RATIO;
         float keepRatio = Math.min(baseRatio, maxRatio);
-        for (int r = 0; r < rows; r++) {
-          if (wall[r][c] && random.nextFloat() > keepRatio) {
-            wall[r][c] = false;
+        for (int r = 0; r < MAX_ROWS; r++) {
+          if (wallGrid[r][c] && random.nextFloat() > keepRatio) {
+            wallGrid[r][c] = false;
           }
         }
       }
@@ -94,12 +102,12 @@ public class MapGenerator {
 
     for (int c = 0; c < COLS; c += 2) {
       int consecutiveEmpty = 0;
-      for (int r = 0; r < rows; r++) {
-        if (!wall[r][c]) {
+      for (int r = 0; r < MAX_ROWS; r++) {
+        if (!wallGrid[r][c]) {
           consecutiveEmpty++;
-          if (consecutiveEmpty >= 4) {
+          if (consecutiveEmpty >= MAX_CONSECUTIVE_EMPTY) {
             int fixRow = r - 2;
-            if (fixRow >= 0) wall[fixRow][c] = true;
+            if (fixRow >= 0) wallGrid[fixRow][c] = true;
             consecutiveEmpty = 0;
           }
         } else {
@@ -109,20 +117,32 @@ public class MapGenerator {
     }
 
     for (int c = 0; c < COLS; c += 2) {
-      wall[0][c] = true;
-      wall[20][c] = true;
+      wallGrid[0][c] = true;
+      wallGrid[MAX_ROWS - 1][c] = true;
     }
 
-    for (int r = 0; r < rows; r++) {
+    int wallIdx = 0;
+    for (int r = 0; r < MAX_ROWS; r++) {
       float topBase = r * cellH;
       float wallTop = topBase + marginY;
       float wallBottom = wallTop + wallHeight;
       for (int c = 0; c < COLS; c++) {
-        if (!wall[r][c]) continue;
+        if (!wallGrid[r][c]) continue;
+
         float leftBase = c * cellW;
         float left = leftBase + marginX;
         float right = left + wallWidth;
-        map.addWall(new Wall(left, wallTop, right, wallBottom));
+
+        Wall wallObj;
+        if (wallIdx < wallPool.size()) {
+          wallObj = wallPool.get(wallIdx);
+          wallObj.getRect().set(left, wallTop, right, wallBottom);
+        } else {
+          wallObj = new Wall(left, wallTop, right, wallBottom);
+          wallPool.add(wallObj);
+        }
+        map.addWall(wallObj);
+        wallIdx++;
       }
     }
 
