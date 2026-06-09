@@ -9,9 +9,12 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
 import com.ltd14.cellgate.R;
 import com.ltd14.cellgate.activities.GameActivity;
@@ -31,6 +34,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
   private final Context context;
   private final float scrollSpeed = 4f;
+  private final Handler mainHandler = new Handler(Looper.getMainLooper());
   private GameLoop gameLoop;
   private Plane plane;
   private MapData mapData;
@@ -101,6 +105,21 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     plane.setPosition(getWidth() / 2f, (float) (getHeight() - getHeight() * 0.4));
   }
 
+  public void pause() {
+    if (gameLoop != null) {
+      gameLoop.stopLoop();
+      try {
+        gameLoop.join();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      gameLoop = null;
+    }
+  }
+
+  public void resume() {
+  }
+
   private void update() {
     if (state != GameState.PLAYING) return;
     scrollY += scrollSpeed;
@@ -134,12 +153,17 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
   private void drawGame() {
     Canvas canvas = getHolder().lockCanvas();
     if (canvas == null) return;
-    backgroundRenderer.draw(canvas, getWidth(), getHeight());
-    particleSystem.draw(canvas, particlePaint);
-    drawWalls(canvas);
-    drawPlane(canvas);
-    hudRenderer.draw(canvas, scoreManager.getScore());
-    getHolder().unlockCanvasAndPost(canvas);
+    try {
+      synchronized (getHolder()) {
+        backgroundRenderer.draw(canvas, getWidth(), getHeight());
+        particleSystem.draw(canvas, particlePaint);
+        drawWalls(canvas);
+        drawPlane(canvas);
+        hudRenderer.draw(canvas, scoreManager.getScore());
+      }
+    } finally {
+      getHolder().unlockCanvasAndPost(canvas);
+    }
   }
 
   private void drawWalls(Canvas canvas) {
@@ -153,7 +177,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
   private void drawPlane(Canvas canvas) {
     if (planeBitmap == null) {
-      // Fallback: vẽ hình tam giác đơn giản
       float x = plane.getX();
       float y = plane.getY();
       Paint p = new Paint();
@@ -180,6 +203,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
   }
 
   private void gameOver() {
+    if (state == GameState.GAME_OVER) return;
     state = GameState.GAME_OVER;
     soundManager.playFail();
     int score = scoreManager.getScore();
@@ -187,7 +211,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     if (score > best) {
       PreferenceUtil.saveBestScore(context, score);
     }
-    postDelayed(
+    
+    mainHandler.postDelayed(
         () -> {
           Intent intent = new Intent(context, GameOverActivity.class);
           intent.putExtra("score", score);
@@ -213,25 +238,33 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
   }
 
   @Override
-  public void surfaceCreated(SurfaceHolder holder) {
+  public void surfaceCreated(@NonNull SurfaceHolder holder) {
     initializeGame();
-    gameLoop =
-        new GameLoop(
-            () -> {
-              update();
-              drawGame();
-            });
-    gameLoop.startLoop();
+    if (gameLoop == null) {
+      gameLoop =
+          new GameLoop(
+              () -> {
+                update();
+                drawGame();
+              });
+      gameLoop.startLoop();
+    }
   }
 
   @Override
-  public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
+  public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {}
 
   @Override
-  public void surfaceDestroyed(SurfaceHolder holder) {
-    if (gameLoop != null) {
-      gameLoop.stopLoop();
+  public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+    pause();
+  }
+
+  @Override
+  protected void onDetachedFromWindow() {
+    super.onDetachedFromWindow();
+    mainHandler.removeCallbacksAndMessages(null);
+    if (soundManager != null) {
+      soundManager.release();
     }
-    soundManager.release();
   }
 }
