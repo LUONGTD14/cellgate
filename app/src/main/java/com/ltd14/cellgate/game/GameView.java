@@ -50,6 +50,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
   private HudRenderer hudRenderer;
   private Paint wallPaint;
   private Paint particlePaint;
+  private Paint fallbackPlanePaint;
+  private Path fallbackPlanePath;
   private Bitmap planeBitmap;
   private GameState state = GameState.READY;
   private boolean initialized;
@@ -73,6 +75,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     wallPaint.setColor(Color.WHITE);
     particlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     particlePaint.setColor(0x55FFFFFF);
+
+    fallbackPlanePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    fallbackPlanePaint.setColor(0xFFFFC107);
+    fallbackPlanePath = new Path();
 
     Drawable drawable = AppCompatResources.getDrawable(context, R.drawable.airplane);
     int desiredWidth = (int) Constants.PLANE_WIDTH;
@@ -158,7 +164,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
       collisionTmpRect.set(wall.getRect());
       collisionTmpRect.offset(0, scrollY);
 
-      // Culling optimization: skip collision if wall is outside screen vertically
       if (collisionTmpRect.bottom < 0 || collisionTmpRect.top > getHeight()) {
         continue;
       }
@@ -174,7 +179,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     SurfaceHolder holder = getHolder();
     Canvas canvas = null;
     try {
-      // Use hardware acceleration for API 26+
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         canvas = holder.lockHardwareCanvas();
       } else {
@@ -208,7 +212,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     canvas.translate(0, scrollY);
     for (Wall wall : mapData.getWalls()) {
       RectF r = wall.getRect();
-      // Optimization: don't draw walls that are off-screen
       if (r.top + scrollY > getHeight() || r.bottom + scrollY < 0) {
         continue;
       }
@@ -221,15 +224,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     if (planeBitmap == null) {
       float x = plane.getX();
       float y = plane.getY();
-      Paint p = new Paint();
-      p.setColor(0xFFFFC107);
-      p.setAntiAlias(true);
-      Path path = new Path();
-      path.moveTo(x, y - 20f);
-      path.lineTo(x - 15f, y + 10f);
-      path.lineTo(x + 15f, y + 10f);
-      path.close();
-      canvas.drawPath(path, p);
+      fallbackPlanePath.reset();
+      fallbackPlanePath.moveTo(x, y - 20f);
+      fallbackPlanePath.lineTo(x - 15f, y + 10f);
+      fallbackPlanePath.lineTo(x + 15f, y + 10f);
+      fallbackPlanePath.close();
+      canvas.drawPath(fallbackPlanePath, fallbackPlanePaint);
       return;
     }
 

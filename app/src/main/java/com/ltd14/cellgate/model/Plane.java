@@ -10,6 +10,7 @@ public class Plane {
   private float targetX;
   private float angle;
   private int lane;
+  private final RectF bounds = new RectF();
 
   public Plane(float x, float y, float width, float height) {
     this.x = x;
@@ -17,6 +18,7 @@ public class Plane {
     this.width = width;
     this.height = height;
     this.targetX = x;
+    updateBounds();
   }
 
   public void update() {
@@ -25,10 +27,15 @@ public class Plane {
     angle = dx * 0.08f;
     if (angle > 25) angle = 25;
     if (angle < -25) angle = -25;
+    updateBounds();
+  }
+
+  private void updateBounds() {
+    bounds.set(x - width / 2f, y - height / 2f, x + width / 2f, y + height / 2f);
   }
 
   public RectF getBounds() {
-    return new RectF(x - width / 2f, y - height / 2f, x + width / 2f, y + height / 2f);
+    return bounds;
   }
 
   public float getX() {
@@ -59,6 +66,7 @@ public class Plane {
     this.x = x;
     this.y = y;
     this.targetX = x;
+    updateBounds();
   }
 
   public int getLane() {
