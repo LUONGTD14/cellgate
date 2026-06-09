@@ -11,16 +11,19 @@ android {
         minSdk = 34
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0.070626" // 1.0.070626 bug increase date, feature increase code
+        versionName = "1.0.070626"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+        unitTests.isIncludeAndroidResources = true
+    }
+
     applicationVariants.all {
         outputs.all {
-
             val versionName = android.defaultConfig.versionName ?: "unknown"
-
             (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
                 "cellgat_${versionName}.apk"
         }
@@ -47,6 +50,8 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     testImplementation(libs.junit)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.robolectric)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }
