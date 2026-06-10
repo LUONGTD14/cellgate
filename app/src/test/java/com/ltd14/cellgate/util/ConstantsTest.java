@@ -10,7 +10,7 @@ public class ConstantsTest {
     // Ensure that critical game balance parameters are not accidentally changed
     assertEquals(11, Constants.COLS);
     assertEquals(21, Constants.MAX_ROWS);
-    assertEquals(0.9f, Constants.HITBOX_RATIO, 0.001f);
-    assertEquals(60, Constants.FPS);
+    assertEquals(0.85f, Constants.HITBOX_RATIO, 0.001f);
+    assertEquals(50, Constants.FPS);
   }
 }

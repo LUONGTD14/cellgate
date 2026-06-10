@@ -13,6 +13,8 @@ android {
         versionCode = 1
         versionName = "1.0.070626"
 
+        setProperty("archivesBaseName", "cellgat_${versionName}")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

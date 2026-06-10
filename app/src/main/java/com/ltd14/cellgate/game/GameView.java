@@ -71,12 +71,16 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     hudRenderer = new HudRenderer(context);
     soundManager = new SoundManager(context);
 
-    wallPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    wallPaint = new Paint();
+    wallPaint.setAntiAlias(false);
     wallPaint.setColor(Color.WHITE);
-    particlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    particlePaint = new Paint();
+    particlePaint.setAntiAlias(false);
     particlePaint.setColor(0x55FFFFFF);
 
-    fallbackPlanePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    fallbackPlanePaint = new Paint();
+    fallbackPlanePaint.setAntiAlias(false);
     fallbackPlanePaint.setColor(0xFFFFC107);
     fallbackPlanePath = new Path();
 
@@ -93,12 +97,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     }
   }
 
-  public void setGameState(GameState state) {
-    this.state = state;
-  }
-
   public GameState getGameState() {
     return state;
+  }
+
+  public void setGameState(GameState state) {
+    this.state = state;
   }
 
   private void initializeGame() {

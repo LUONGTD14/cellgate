@@ -11,7 +11,7 @@ public class ParticleSystem {
 
   public ParticleSystem(int width, int height) {
 
-    particles = new Particle[80];
+    particles = new Particle[40];
 
     for (int i = 0; i < particles.length; i++) {
 
