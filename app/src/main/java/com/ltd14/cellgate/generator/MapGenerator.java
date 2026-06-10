@@ -117,7 +117,7 @@ public class MapGenerator {
     }
 
     for (int c = 0; c < COLS; c += 2) {
-      wallGrid[0][c] = true;
+      //      wallGrid[0][c] = true;
       wallGrid[MAX_ROWS - 1][c] = true;
     }
 
