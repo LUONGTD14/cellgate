@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import com.ltd14.cellgate.R;
 import com.ltd14.cellgate.game.GameState;
@@ -41,6 +42,19 @@ public class GameActivity extends AppCompatActivity {
       startActivity(intent);
       finish();
     });
+
+    // Hiện đại hóa onBackPressed bằng OnBackPressedDispatcher
+    getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+      @Override
+      public void handleOnBackPressed() {
+        if (gameView != null && gameView.getGameState() == GameState.PLAYING) {
+          pauseGame();
+        } else {
+          setEnabled(false);
+          getOnBackPressedDispatcher().onBackPressed();
+        }
+      }
+    });
   }
 
   private void pauseGame() {
@@ -73,15 +87,6 @@ public class GameActivity extends AppCompatActivity {
     super.onResume();
     if (gameView != null) {
       gameView.resume();
-    }
-  }
-
-  @Override
-  public void onBackPressed() {
-    if (gameView != null && gameView.getGameState() == GameState.PLAYING) {
-      pauseGame();
-    } else {
-      super.onBackPressed();
     }
   }
 }

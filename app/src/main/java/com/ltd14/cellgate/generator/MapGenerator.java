@@ -13,6 +13,11 @@ import static com.ltd14.cellgate.util.Constants.SCORE_PER_BRIDGE;
 import static com.ltd14.cellgate.util.Constants.WALL_HEIGHT_RATIO;
 import static com.ltd14.cellgate.util.Constants.WALL_WIDTH_RATIO;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import com.ltd14.cellgate.model.MapData;
 import com.ltd14.cellgate.model.Wall;
 import java.util.ArrayList;
@@ -27,6 +32,12 @@ public class MapGenerator {
   private final boolean[][] wallGrid = new boolean[MAX_ROWS][COLS];
   private final int[] gateOpenCount = new int[COLS];
   private final List<Wall> wallPool = new ArrayList<>();
+  private final Paint wallPaint = new Paint();
+
+  public MapGenerator() {
+    wallPaint.setAntiAlias(true);
+    wallPaint.setColor(Color.WHITE);
+  }
 
   public MapData generate(int width, int height, int score) {
     MapData map = new MapData();
@@ -117,9 +128,12 @@ public class MapGenerator {
     }
 
     for (int c = 0; c < COLS; c += 2) {
-      //      wallGrid[0][c] = true;
       wallGrid[MAX_ROWS - 1][c] = true;
     }
+
+    // Create Bitmap for the entire map
+    Bitmap mapBitmap = Bitmap.createBitmap(width, (int) mapHeight, Bitmap.Config.ARGB_8888);
+    Canvas canvas = new Canvas(mapBitmap);
 
     int wallIdx = 0;
     for (int r = 0; r < MAX_ROWS; r++) {
@@ -142,11 +156,16 @@ public class MapGenerator {
           wallPool.add(wallObj);
         }
         map.addWall(wallObj);
+        
+        // Render wall to bitmap
+        canvas.drawRoundRect(wallObj.getRect(), 12, 12, wallPaint);
+        
         wallIdx++;
       }
     }
 
     map.setMapHeight(mapHeight);
+    map.setMapBitmap(mapBitmap);
     return map;
   }
 }

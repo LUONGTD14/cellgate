@@ -48,7 +48,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
   private BackgroundRenderer backgroundRenderer;
   private ParticleSystem particleSystem;
   private HudRenderer hudRenderer;
-  private Paint wallPaint;
   private Paint particlePaint;
   private Paint fallbackPlanePaint;
   private Path fallbackPlanePath;
@@ -70,10 +69,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     backgroundRenderer = new BackgroundRenderer();
     hudRenderer = new HudRenderer(context);
     soundManager = new SoundManager(context);
-
-    wallPaint = new Paint();
-    wallPaint.setAntiAlias(false);
-    wallPaint.setColor(Color.WHITE);
 
     particlePaint = new Paint();
     particlePaint.setAntiAlias(false);
@@ -122,33 +117,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
   }
 
   private void loadNextMap() {
+    if (mapData != null) {
+      mapData.recycle();
+    }
     mapData = mapGenerator.generate(getWidth(), getHeight(), scoreManager.getScore());
     scrollY = -mapData.getMapHeight();
     plane.setPosition(getWidth() / 2f, (float) (getHeight() - getHeight() * 0.4));
-  }
-
-  public void pause() {
-    if (gameLoop != null) {
-      gameLoop.stopLoop();
-      try {
-        gameLoop.join();
-      } catch (InterruptedException e) {
-        Log.e(TAG, "Error joining game loop", e);
-      }
-      gameLoop = null;
-    }
-  }
-
-  public void resume() {
-    if (gameLoop == null && getHolder().getSurface().isValid()) {
-      gameLoop =
-          new GameLoop(
-              () -> {
-                update();
-                drawGame();
-              });
-      gameLoop.startLoop();
-    }
   }
 
   private void update() {
@@ -175,14 +149,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     for (Wall wall : mapData.getWalls()) {
       collisionTmpRect.set(wall.getRect());
       collisionTmpRect.offset(0, scrollY);
-
-      if (collisionTmpRect.bottom < 0 || collisionTmpRect.top > getHeight()) {
-        continue;
-      }
-
-      if (RectF.intersects(planeRect, collisionTmpRect)) {
-        return true;
-      }
+      if (collisionTmpRect.bottom < 0 || collisionTmpRect.top > getHeight()) continue;
+      if (RectF.intersects(planeRect, collisionTmpRect)) return true;
     }
     return false;
   }
@@ -207,29 +175,18 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         }
       }
     } catch (Exception e) {
-      Log.e(TAG, "Drawing error in drawGame", e);
+      Log.e(TAG, "Drawing error", e);
     } finally {
       if (canvas != null) {
-        try {
-          holder.unlockCanvasAndPost(canvas);
-        } catch (Exception e) {
-          Log.e(TAG, "Error unlocking canvas", e);
-        }
+        holder.unlockCanvasAndPost(canvas);
       }
     }
   }
 
   private void drawWalls(Canvas canvas) {
-    canvas.save();
-    canvas.translate(0, scrollY);
-    for (Wall wall : mapData.getWalls()) {
-      RectF r = wall.getRect();
-      if (r.top + scrollY > getHeight() || r.bottom + scrollY < 0) {
-        continue;
-      }
-      canvas.drawRoundRect(r, 12, 12, wallPaint);
+    if (mapData != null && mapData.getMapBitmap() != null) {
+      canvas.drawBitmap(mapData.getMapBitmap(), 0, scrollY, null);
     }
-    canvas.restore();
   }
 
   private void drawPlane(Canvas canvas) {
@@ -244,15 +201,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
       canvas.drawPath(fallbackPlanePath, fallbackPlanePaint);
       return;
     }
-
     float x = plane.getX();
     float y = plane.getY();
     float angle = plane.getAngle();
     canvas.save();
     canvas.translate(x, y);
     canvas.rotate(angle);
-    canvas.drawBitmap(
-        planeBitmap, -planeBitmap.getWidth() / 2f, -planeBitmap.getHeight() / 2f, null);
+    canvas.drawBitmap(planeBitmap, -planeBitmap.getWidth() / 2f, -planeBitmap.getHeight() / 2f, null);
     canvas.restore();
   }
 
@@ -262,71 +217,53 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     soundManager.playFail();
     int score = scoreManager.getScore();
     int best = PreferenceUtil.getBestScore(context);
-    if (score > best) {
-      PreferenceUtil.saveBestScore(context, score);
-    }
+    if (score > best) PreferenceUtil.saveBestScore(context, score);
 
-    mainHandler.postDelayed(
-        () -> {
-          Intent intent = new Intent(context, GameOverActivity.class);
-          intent.putExtra(Constants.EXTRA_SCORE, score);
-          intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-          context.startActivity(intent);
-          if (context instanceof GameActivity) {
-            ((GameActivity) context).finish();
-          }
-        },
-        500);
+    mainHandler.postDelayed(() -> {
+      Intent intent = new Intent(context, GameOverActivity.class);
+      intent.putExtra(Constants.EXTRA_SCORE, score);
+      intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+      context.startActivity(intent);
+      if (context instanceof GameActivity) ((GameActivity) context).finish();
+    }, 500);
+  }
+
+  public void pause() {
+    if (gameLoop != null) {
+      gameLoop.stopLoop();
+      try { gameLoop.join(); } catch (InterruptedException ignored) {}
+      gameLoop = null;
+    }
+  }
+
+  public void resume() {
+    if (gameLoop == null && getHolder().getSurface().isValid()) {
+      gameLoop = new GameLoop(() -> { update(); drawGame(); });
+      gameLoop.startLoop();
+    }
   }
 
   @Override
   public boolean onTouchEvent(MotionEvent event) {
     if (plane == null || state == GameState.PAUSED) return true;
-    switch (event.getAction()) {
-      case MotionEvent.ACTION_DOWN:
-      case MotionEvent.ACTION_MOVE:
-        plane.setTargetX(event.getX());
-        break;
-      case MotionEvent.ACTION_UP:
-        performClick();
-        break;
+    if (event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE) {
+      plane.setTargetX(event.getX());
     }
     return true;
   }
 
   @Override
-  public boolean performClick() {
-    return super.performClick();
-  }
-
-  @Override
-  public void surfaceCreated(@NonNull SurfaceHolder holder) {
-    initializeGame();
-    resume();
-  }
-
+  public void surfaceCreated(@NonNull SurfaceHolder holder) { initializeGame(); resume(); }
   @Override
   public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {}
-
   @Override
-  public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
-    pause();
-  }
+  public void surfaceDestroyed(@NonNull SurfaceHolder holder) { pause(); }
 
   @Override
   protected void onDetachedFromWindow() {
     super.onDetachedFromWindow();
     mainHandler.removeCallbacksAndMessages(null);
-    if (soundManager != null) {
-      soundManager.release();
-    }
-  }
-
-  @Override
-  protected void onAttachedToWindow() {
-    super.onAttachedToWindow();
-    if (soundManager == null) {
-      soundManager = new SoundManager(context);
-    }
+    if (soundManager != null) soundManager.release();
+    if (mapData != null) mapData.recycle();
   }
 }
