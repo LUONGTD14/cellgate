@@ -4,17 +4,19 @@ import static org.junit.Assert.assertNotEquals;
 
 import com.ltd14.cellgate.model.MapData;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
+@RunWith(RobolectricTestRunner.class)
 public class MapGeneratorRandomnessTest {
 
   @Test
   public void testConsecutiveMapsAreDifferent() {
-    MapGenerator generator = new MapGenerator();
     int width = 1080;
     int height = 1920;
 
-    MapData map1 = generator.generate(width, height, 0);
-    MapData map2 = generator.generate(width, height, 0);
+    MapData map1 = new MapGenerator().generate(width, height, 0);
+    MapData map2 = new MapGenerator().generate(width, height, 0);
 
     assertNotEquals(
         "Consecutive maps should be randomly different",

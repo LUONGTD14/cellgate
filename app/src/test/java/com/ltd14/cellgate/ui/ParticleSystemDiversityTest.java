@@ -22,16 +22,16 @@ public class ParticleSystemDiversityTest {
 
     Class<?> particleClass = Class.forName("com.ltd14.cellgate.ui.ParticleSystem$Particle");
     Field xField = particleClass.getDeclaredField("x");
-    Field radiusField = particleClass.getDeclaredField("radius");
+    Field speedField = particleClass.getDeclaredField("speed");
     xField.setAccessible(true);
-    radiusField.setAccessible(true);
+    speedField.setAccessible(true);
 
     float firstX = (float) xField.get(particles[0]);
     float secondX = (float) xField.get(particles[1]);
-    float firstRadius = (float) radiusField.get(particles[0]);
+    float firstSpeed = (float) speedField.get(particles[0]);
 
-    // Probability of two particles having exactly the same X or radius is very low
+    // Probability of two particles having exactly the same X or speed is very low
     assertNotEquals("Particles should have different X positions", firstX, secondX, 0.001f);
-    assertTrue("Radius should be within range", firstRadius >= 2 && firstRadius <= 8);
+    assertTrue("Speed should be within range", firstSpeed >= 1.0f && firstSpeed <= 3.0f);
   }
 }
